@@ -64,12 +64,11 @@ class getMedia(webapp.RequestHandler):
 			self.response.headers['Content-Type'] = str(mtype)
 			self.response.out.write(buf)
 			
-			         
+# Upload file to webapp by access with post request
+# Ex. $curl -F fileext='png' -F filename=snapshot.png -F upfile=@snapshot.png http://localhost:8080/upload
 class Upload(webapp.RequestHandler):
     def post(self):
         name = self.request.get('filename')
-#	mtype = name.split('.')[-1]
-#	bits = os.path.splitext(name)[0]
         mtype = self.request.get('fileext')
         bits = self.request.get('upfile')       
         gf=GaeFile()
