@@ -29,6 +29,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.os.ParcelFileDescriptor;
@@ -48,8 +49,7 @@ import com.android.future.usb.UsbManager;
 
 public class DemoKitActivity extends Activity implements Runnable {
 	private static final String TAG = "MidiSync";
-	private static final String uploadFile = "/mnt/emmc/Music/timestretched.mid";
-	private static final String fileName = "timestretched.mid";
+	private static final String fileName = "test1.mid";
 	private static final String extName = "mid";
 	private static final String url = "http://omychatsubo.appspot.com/upload";
 
@@ -366,14 +366,14 @@ public class DemoKitActivity extends Activity implements Runnable {
     Runnable backgroundThread = new Runnable(){
 	    @Override
 		public void run() {
-		postFile();
+	    	File file = midiGenerate();
+	    	postFile(file);
 	    }};
 
-	protected void postFile() {
+	protected void postFile(File file) {
 		Log.i(TAG, "Posting file");
 		try {
 		    HttpPost httppost = new HttpPost(url);
-		    File file = new File(uploadFile);
 		    MultipartEntity entity = new MultipartEntity();
 		    entity.addPart("filename", new StringBody(fileName));
 		    entity.addPart("fileext", new StringBody(extName));
@@ -390,6 +390,78 @@ public class DemoKitActivity extends Activity implements Runnable {
 		    e.printStackTrace();
 		    return;
 		}
+	}
+	
+	private static File midiGenerate() {
+		Log.i(TAG, "Midi file generating.");
+		  final int SEMIQUAVER = 4;
+		  final int QUAVER = 8;
+		  final int CROTCHET = 16;
+		  final int MINIM = 32;
+		  final int SEMIBREVE = 64;
+
+		try {
+		    MidiFile mf = new MidiFile();
+		    File f = new File(Environment.getExternalStorageDirectory().getPath() + File.separator + fileName); 
+
+		    // Test 1 — play a C major chord
+		    
+		    // Turn on all three notes at start-of-track (delta=0) 
+		    mf.noteOn (0, 60, 127);
+		    mf.noteOn (0, 64, 127);
+		    mf.noteOn (0, 67, 127);
+
+		    // Turn off all three notes after one minim. 
+		    // NOTE delta value is cumulative — only _one_ of
+		    //  these note-offs has a non-zero delta. The second and
+		    //  third events are relative to the first
+		    mf.noteOff (MINIM, 60);
+		    mf.noteOff (0, 64);
+		    mf.noteOff (0, 67);
+
+		    // Test 2 — play a scale using noteOnOffNow
+		    //  We don't need any delta values here, so long as one
+		    //  note comes straight after the previous one 
+
+		    mf.noteOnOffNow (QUAVER, 60, 127);
+		    mf.noteOnOffNow (QUAVER, 62, 127);
+		    mf.noteOnOffNow (QUAVER, 64, 127);
+		    mf.noteOnOffNow (QUAVER, 65, 127);
+		    mf.noteOnOffNow (QUAVER, 67, 127);
+		    mf.noteOnOffNow (QUAVER, 69, 127);
+		    mf.noteOnOffNow (QUAVER, 71, 127);
+		    mf.noteOnOffNow (QUAVER, 72, 127);
+
+		    // Test 3 — play a short tune using noteSequenceFixedVelocity
+		    //  Note the rest inserted with a note value of -1
+
+		    int[] sequence = new int[]
+		      {
+		      60, QUAVER + SEMIQUAVER,
+		      65, SEMIQUAVER,
+		      70, CROTCHET + QUAVER,
+		      69, QUAVER,
+		      65, QUAVER / 3,
+		      62, QUAVER / 3,
+		      67, QUAVER / 3,
+		      72, MINIM + QUAVER,
+		      -1, SEMIQUAVER,
+		      72, SEMIQUAVER,
+		      76, MINIM,
+		      };
+
+		    // What the heck — use a different instrument for a change
+		    mf.progChange (10);
+
+		    mf.noteSequenceFixedVelocity (sequence, 127);
+
+		    mf.writeToFile (f);
+		    Log.i(TAG, "File generated");
+		    return f;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 }

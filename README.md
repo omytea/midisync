@@ -10,7 +10,9 @@ The Beat will be record as midi file. Then sync to the server on google appengin
 This project contains three part - web app, android app and accessory.
 
 /webapp    web application is implemented in python, can be upload and running on google app engine
+
 /client    android app is used to communicate between arduino and webapp.
+
 /arduino   it is needed for the android app
 
 Ref:
